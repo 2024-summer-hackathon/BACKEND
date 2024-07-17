@@ -71,3 +71,15 @@ def pose(string: str = "cute cat", people=2):
     result = Image.open(urllib.request.urlopen(response.get("images")[0].get("image")))
     return response.get("images")[0].get("image")
 
+@app.get("/background/")
+def pose(string: str = "cute cat", people=2):
+    # 프롬프트에 사용할 제시어
+    prompt = "Background photo with the theme of " + string
+    negative_prompt = ""
+
+    # 이미지 생성하기 REST API 호출
+    response = t2i(prompt, negative_prompt)
+
+    # 응답의 첫 번째 이미지 생성 결과 출력하기
+    result = Image.open(urllib.request.urlopen(response.get("images")[0].get("image")))
+    return response.get("images")[0].get("image")
