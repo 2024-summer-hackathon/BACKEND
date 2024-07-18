@@ -59,9 +59,12 @@ def t2i(prompt, negative_prompt):
     return response
 
 @app.get("/pose/")
-def pose(string: str = "cute cat", people=2):
+def pose(string: str = "cute cat", people=2, type: int = 1):
     # 프롬프트에 사용할 제시어
-    prompt = "A photo of two high school girls posing for the camera from a distance, using the theme of "+string+" in a american cartoon style."
+    if(type == 1):
+        prompt = "A photo of two high school girls posing for the camera from a distance, using the theme of "+string+" in a american cartoon style."
+    elif(type == 2):
+        prompt = string
     negative_prompt = ""
 
     # 이미지 생성하기 REST API 호출
