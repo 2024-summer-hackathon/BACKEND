@@ -72,6 +72,7 @@ def t2i(prompt, negative_prompt):
             "num_inference_steps": 30,
             "guidance_scale": 3.0,
             "negative_prompt": negative_prompt, 
+            "nsfw_checker": True,
             "height": 1024,
             "width": 1024
         },
