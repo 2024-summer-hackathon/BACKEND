@@ -1,13 +1,31 @@
 # REST API 호출, 이미지 파일 처리에 필요한 라이브러리
 import requests
+from io import StringIO
 import json
 import urllib
+from typing import Annotated
 from PIL import Image
 from fastapi.middleware.cors import CORSMiddleware
+import pyqrcode
+import base64
+from PIL import Image
+import PIL.Image
+import io
+from pydantic import BaseModel
+import cv2
+import numpy as np
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+from io import BytesIO
+from datetime import datetime
+from fastapi.responses import Response
 
 # fastapi 설정
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 origins = [
 	"*"
@@ -36,7 +54,19 @@ tema = \
     "다정한":"fond"
 }
     
+def base64_to_image(base64_data):
+    base64_data = base64_data.split(',')[1]
 
+    image_data = base64.b64decode(base64_data)
+
+    with open('static/images/out.jpg', 'wb') as img:
+        img.write(image_data)
+
+    image_stream = BytesIO(image_data)
+
+    img = Image.open(image_stream)
+
+    return ['static/images/out.jpg', img]
 
 # 이미지 생성하기 요청
 def t2i(prompt, negative_prompt):
@@ -45,6 +75,11 @@ def t2i(prompt, negative_prompt):
         json = {
             "version": "v2.1", 
             "prompt": prompt,
+            "image_quality": 100,
+            "prior_num_inference_steps": 30,
+            "prior_guidance_scale": 3.0,
+            "num_inference_steps": 30,
+            "guidance_scale": 3.0,
             "negative_prompt": negative_prompt, 
             "height": 1024,
             "width": 1024
@@ -83,3 +118,32 @@ def pose(string: str = "cute cat", people=2):
     # 응답의 첫 번째 이미지 생성 결과 출력하기
     result = Image.open(urllib.request.urlopen(response.get("images")[0].get("image")))
     return response.get("images")[0].get("image")
+
+class Item(BaseModel):
+    string: str
+
+@app.post("/upload")
+def upload(item: Item):
+    item = dict(item)
+    # base64 문자열 디코딩
+    print(item['string'])
+
+    base64_data = item['string']
+
+    file_name, image = base64_to_image(base64_data)
+
+    print(image)
+
+    image.show()
+
+    qr_img = pyqrcode.create('http://10.150.151.171:8000/static/images/out.jpg')
+    qr_img.svg(file='qr_code.svg', scale=10)
+    
+    with open("qr_code.svg", "r") as svg_file:
+        svg_content = svg_file.read()
+    return Response(content=svg_content, media_type="image/svg+xml")
+
+def get_image_url(image_name: str):
+    base_url = "http://127.0.0.1:8000"  # 실제 서버 주소로 변경해야 합니다
+    image_url = f"{base_url}/{image_name}"
+    return {"image_url": image_url}
